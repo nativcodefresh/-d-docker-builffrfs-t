@@ -1,0 +1,17 @@
+version: '1.0'
+steps:
+  unit_test_step:
+    title: "Executing unit tests..."
+    image: node:6.9.2-alphine
+    commands:
+      - npm install
+
+  build_step:
+    title: "Building step..."
+    type: build
+    image_name: codefresh/cf-docker-builder
+
+  push_to_registry:
+    type: push
+    candidate: ${{build-step}}
+    tag: ${{CF_BRANCH}}
