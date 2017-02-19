@@ -11,7 +11,3 @@ steps:
     type: build
     image_name: codefresh/cf-docker-builder
 
-  push_to_registry:
-    type: push
-    candidate: ${{build-step}}
-    tag: ${{CF_BRANCH}}
