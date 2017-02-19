@@ -2,7 +2,7 @@ version: '1.0'
 steps:
   unit_test_step:
     title: "Executing unit tests..."
-    image: node:6.9.2-alphine
+    image: node:6.9.2-alpine
     commands:
       - npm install
 
