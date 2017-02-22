@@ -1,4 +1,4 @@
-// TODO: Explain what this file does. (If you see this, blame roy which created this on 19/02/2017)
+// main script of the building of the file.
 
 'use strict';
 
@@ -8,6 +8,7 @@
 const Promise       = require('bluebird');
 
 const chalk = require('chalk');
+const Docker = require('dockerode');
 const CFError = require('cf-errors');
 const { pack } = require('./packer');
 

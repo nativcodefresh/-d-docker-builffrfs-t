@@ -1,14 +1,10 @@
-// TODO: Explain what this file does. (If you see this, blame roy which created this on 22/02/2017)
+// packing directory to a tar file. while ignoring by it's ignore file.
 
 'use strict';
 
 //------------------------------------------------------------------------------
 // Requirements
 //------------------------------------------------------------------------------
-// const Q       = require('q');
-const _       = require('lodash');
-const CFError = require('cf-errors');
-// const logger  = require('cf-logs').newLoggerFromFilename(__filename);
 
 const Promise       = require('bluebird');
 const path = require('path');

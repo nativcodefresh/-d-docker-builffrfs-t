@@ -1,4 +1,4 @@
-// TODO: Explain what this file does. (If you see this, blame roy which created this on 19/02/2017)
+// index file
 
 'use strict';
 

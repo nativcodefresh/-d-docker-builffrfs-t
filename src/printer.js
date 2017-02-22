@@ -1,4 +1,4 @@
-// TODO: Explain what this file does. (If you see this, blame roy which created this on 21/02/2017)
+// printing a docker build response
 
 'use strict';
 
