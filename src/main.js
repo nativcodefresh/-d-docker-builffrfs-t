@@ -7,59 +7,41 @@
 //------------------------------------------------------------------------------
 const Promise       = require('bluebird');
 
-const fs = require('fs');
-const ignore = require('ignore');
-const Docker = require('dockerode');
-const tar = require('tar-fs');
 const chalk = require('chalk');
+const CFError = require('cf-errors');
+const { pack } = require('./packer');
 
-Promise.promisifyAll(fs);
 Promise.promisifyAll(Docker.prototype);
+
+const { printResponse } = require('./printer');
 
 //------------------------------------------------------------------------------
 // Helpers
 //------------------------------------------------------------------------------
 
-function getDockerIgnore() {
-    return fs.readFileAsync('./.dockerignore')
-        .then((content) => {
-            return ignore().add(content);
-        })
-        .catch((err) => {
-            if (err.code !== 'ENOENT') {
-                throw err;
-            }
 
-            return ignore();
-        });
-}
-
-exports.main = () => {
+exports.main = ({ imageId, dockerFile, buildArgs, labels }) => {
     const docker = Docker();
 
-    getDockerIgnore()
-        .then((dockerIgnore) => {
-            return tar.pack('.', { ignore: dockerIgnore.ignores.bind(dockerIgnore) })
-        })
+    pack('./', '.dockerignore')
         .then((tarArchive) => {
-            return docker.buildImageAsync(tarArchive, {});
+            return docker.buildImageAsync(tarArchive, {
+                't': imageId,
+                'dockerfile': dockerFile,
+                'buildargs': buildArgs,
+                'labels': labels,
+                'pull': true,
+                'forcerm': true
+            })
+                .catch((err) => {
+                    const jsonString = err.message.substring(err.message.indexOf('{'));
+                    throw new CFError(JSON.parse(jsonString).message);
+                });
         })
-        .then((response) => {
-            response.on('data', (data) => {
-                const json = JSON.parse(data.toString());
-
-                if (json.stream) {
-                    process.stdout.write(json.stream);
-                } else if (json.errorDetail) {
-                    process.stdout.write(chalk.red.bold(json.errorDetail.message));
-                } else {
-                    throw new Error('Error when parsing the docker api response');
-                }
-            });
-
-            response.on('end', () => {
-                process.stdout.write('\n');
-            });
+        .then(printResponse)
+        .catch((err) => {
+            process.stdout.write(`${chalk.red.bold(err.message)}\n`);
+            process.exit(1);
         })
         .done();
 };
