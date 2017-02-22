@@ -1,10 +1,18 @@
 version: '1.0'
 steps:
-  unit_test_step:
+  unit-test-step:
     title: "Executing unit tests..."
     image: node:6.9.2-alpine
+    environment:
+        - COVERALLS_TOKEN=${{COVERALLS_TOKEN}}
+    working-directory: ${{initial-clone}}
     commands:
-      - npm install
+        - npm install
+        - npm run no-only
+        - npm test
+        - npm run lint
+        - npm run gulp coveralls
+        - npm run clean
 
   build_step:
     title: "Building step..."
