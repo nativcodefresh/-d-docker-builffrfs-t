@@ -25,7 +25,7 @@ describe('Packer', () => {
             'tar-fs': {
                 pack: (directoryPath, { ignore }) => {
                     ignore = ignore || (() => {});
-                    packingMock(new Set(fs.readdirSync(directoryPath).filter(f => !ignore(f))));
+                    packingMock(fs.readdirSync(directoryPath).filter(f => !ignore(f)).sort());
                 }
             }
         }).pack;
@@ -44,7 +44,7 @@ describe('Packer', () => {
     it('should pack all the files when ignore file empty', () => {
         return pack(directory, '.ignore')
             .then(() => {
-                expect(packingMock).to.be.calledWith(new Set(['.ignore', 'one.file', 'second.txt', 'another.html']));
+                expect(packingMock).to.be.calledWith(['.ignore', 'one.file', 'second.txt', 'another.html'].sort());
             });
     });
 
@@ -53,59 +53,18 @@ describe('Packer', () => {
 
         return pack(directory, '.ignore')
             .then(() => {
-                expect(packingMock).to.be.calledWith(new Set(['one.file', 'second.txt', 'another.html']));
-            });
-    });
-
-    it('should pack files in sub-directories', () => {
-        fs.mkdirSync(path.join(directory, 'empty'));
-        fs.mkdirSync(path.join(directory, 'sub-dir'));
-
-        fs.mkdirSync(path.join(directory, 'sub-dir', 'first-sub-sub-dir'));
-        fs.writeFileSync(path.join(directory, 'sub-dir', 'first-sub-sub-dir', 'file.txt'));
-        fs.writeFileSync(path.join(directory, 'sub-dir', 'first-sub-sub-dir', 'file2.bin'));
-
-        fs.mkdirSync(path.join(directory, 'sub-dir', 'second-2sub-dir'));
-        fs.writeFileSync(path.join(directory, 'sub-dir', 'second-2sub-dir', 'other.file'));
-
-        fs.writeFileSync(path.join(directory, 'sub-dir', 'on_root_sub-dir.png'));
-
-
-        return pack(directory, '.ignore')
-            .then(() => {
-                expect(packingMock).to.be.calledWith(new Set([
-                    'one.file',
-                    'second.txt',
-                    'another.html',
-                    path.join('sub-dir', 'first-sub-sub-dir', 'file.txt'),
-                    path.join('sub-dir', 'first-sub-sub-dir', 'file2.bin'),
-                    path.join('sub-dir', 'second-2sub-dir', 'other.file'),
-                    path.join('sub-dir', 'on_root_sub-dir.png')
-                ]));
+                expect(packingMock).to.be.calledWith(['one.file', 'second.txt', 'another.html'].sort());
             });
     });
 
     it('should pack all files which isn\'t ignore', () => {
-        fs.mkdirSync(path.join(directory, 'sub-dir'));
+        fs.writeFileSync(path.join(directory, 'other.log'));
 
-        fs.mkdirSync(path.join(directory, 'sub-dir', 'first-sub-sub-dir'));
-        fs.writeFileSync(path.join(directory, 'sub-dir', 'first-sub-sub-dir', 'file.txt'));
-        fs.writeFileSync(path.join(directory, 'sub-dir', 'first-sub-sub-dir', 'file2.bin'));
-        fs.writeFileSync(path.join(directory, 'sub-dir', 'first-sub-sub-dir', 'file2.bin'));
-        fs.writeFileSync(path.join(directory, 'sub-dir', 'first-sub-sub-dir', 'file2.log'));
-
-        fs.mkdirSync(path.join(directory, 'sub-dir', 'second-2sub-dir'));
-        fs.writeFileSync(path.join(directory, 'sub-dir', 'second-2sub-dir', 'other.file'));
-        fs.writeFileSync(path.join(directory, 'sub-dir', 'second-2sub-dir', 'other.log'));
-
-        fs.writeFileSync(path.join(directory, 'sub-dir', 'on_root_sub-dir.png'));
-        fs.writeFileSync(path.join(directory, 'sub-dir', 'another.html'));
-        fs.writeFileSync(path.join(directory, 'sub-dir', 'another.log'));
+        fs.writeFileSync(path.join(directory, 'another.log'));
 
         fs.writeFileSync(path.join(directory, 'file.txt'));
 
-        fs.writeFileSync('.ignore', [
-            'sub-dir/second-2sub-dir',
+        fs.writeFileSync(path.join(directory, '.ignore'), [
             'file.txt',
             '*.log',
             '/another.html'
@@ -114,13 +73,11 @@ describe('Packer', () => {
 
         return pack(directory, '.ignore')
             .then(() => {
-                expect(packingMock).to.be.calledWith(new Set([
+                expect(packingMock).to.be.calledWithExactly([
+                    '.ignore',
                     'one.file',
-                    'second.txt',
-                    path.join('sub-dir', 'first-sub-sub-dir', 'file2.bin'),
-                    path.join('sub-dir', 'on_root_sub-dir.png'),
-                    path.join('sub-dir', 'another.html')
-                ]));
+                    'second.txt'
+                ].sort());
             });
     });
 

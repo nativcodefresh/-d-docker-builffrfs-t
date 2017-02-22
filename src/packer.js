@@ -19,7 +19,7 @@ Promise.promisifyAll(fs);
 //------------------------------------------------------------------------------
 
 function getIgnoreFile(ignoreFilePath) {
-    return fs.readFileAsync(ignoreFilePath)
+    return fs.readFileAsync(ignoreFilePath, 'utf-8')
         .then((content) => {
             return ignore().add(content);
         })
@@ -38,7 +38,7 @@ function getIgnoreFile(ignoreFilePath) {
 
 module.exports.pack = (directoryPath, ignoreFile) => {
     return getIgnoreFile(path.join(directoryPath, ignoreFile))
-        .then((dockerIgnore) => {
-            return tar.pack(directoryPath, { ignore: file => dockerIgnore.ignores(file) });
+        .then((ignoreFile) => {
+            return tar.pack(directoryPath, { ignore: file => ignoreFile.ignores(file) });
         });
 };

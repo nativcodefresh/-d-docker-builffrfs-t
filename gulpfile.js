@@ -36,7 +36,7 @@ gulp.task('test', () => {
         }))
         .pipe(istanbul.hookRequire()) // Force `require` to return covered files
         .on('finish', () => {
-            gulp.src(['**/*.unit.spec.js', '!**/node_modules/**/*.js', '!lib/index.js'], { read: false })
+            gulp.src(['**/*.spec.js', '!**/node_modules/**/*.js', '!lib/index.js'], { read: false })
                 .pipe(mocha({ reporter: 'spec', timeout: '10000' }))
                 .pipe(istanbul.writeReports({
                     reporters: ['lcov'],
