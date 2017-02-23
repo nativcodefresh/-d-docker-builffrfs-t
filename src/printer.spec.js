@@ -16,14 +16,14 @@ chai.use(sinonChai);
 describe('Response Printer', () => {
 
     beforeEach(() => {
-        sinon.mock(process.stdout, 'write');
+        process.stdout.write = sinon.stub(process.stdout, 'write');
     });
 
     afterEach(() => {
         process.stdout.write.restore();
     });
 
-    it.only('should print the data brought to it', () => {
+    it('should print the data brought to it', () => {
         const response = new EventEmitter();
 
         setImmediate(() => {
