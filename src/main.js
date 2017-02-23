@@ -7,10 +7,10 @@
 //------------------------------------------------------------------------------
 const Promise       = require('bluebird');
 
-const chalk = require('chalk');
 const Docker = require('dockerode');
 const CFError = require('cf-errors');
 const { pack } = require('./packer');
+const { handleError } = require('./error-handler');
 
 Promise.promisifyAll(Docker.prototype);
 
@@ -40,9 +40,6 @@ exports.main = ({ imageId, dockerFile, buildArgs, labels }) => {
                 });
         })
         .then(printResponse)
-        .catch((err) => {
-            process.stdout.write(`${chalk.red.bold(err.message)}\n`);
-            process.exit(1);
-        })
+        .catch(handleError)
         .done();
 };
