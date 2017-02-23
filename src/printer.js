@@ -30,7 +30,7 @@ module.exports.printResponse = response => new Promise((resolve, reject) => {
             process.stdout.write(`${json.status}\n`);
         } else if (json.error) {
             done = () => reject(new CFError(json.errorDetail.message));
-        } else {
+        } else if (Object.keys(json).length !== 0) {
             done = () => reject(new CFError(`Error when parsing the docker api response: "${data}"`));
         }
     });

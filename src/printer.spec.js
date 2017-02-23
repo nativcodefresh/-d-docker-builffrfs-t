@@ -58,6 +58,21 @@ describe('Response Printer', () => {
             .asCallback(restoreStdoutAnd(done));
     });
 
+    it('should do nothing when getting a empty object', (done) => {
+        const response = new EventEmitter();
+
+        setImmediate(() => {
+            response.emit('data', JSON.stringify({}));
+            response.emit('end');
+        });
+
+        printResponse(response)
+            .then(() => {
+                expect(process.stdout.write).to.always.have.been.calledWithExactly('\n');
+            })
+            .asCallback(restoreStdoutAnd(done));
+    });
+
     it('should throw error when an error is send in response', (done) => {
         const response = new EventEmitter();
 
