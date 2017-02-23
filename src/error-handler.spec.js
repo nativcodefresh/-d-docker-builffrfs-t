@@ -19,9 +19,12 @@ describe('Error Handler', () => {
     });
 
     afterEach(() => {
-        process.stdout.write.restore();
         process.exitCode = 0;
     });
+
+    const restoreStdout = () => {
+        process.stdout.write.restore();
+    };
 
     it('prints the error message', () => {
         const error = new CFError('Error message');
@@ -29,6 +32,7 @@ describe('Error Handler', () => {
         handleError(error);
 
         expect(process.stdout.write).to.have.been.calledWithMatch(/Error message/);
+        restoreStdout();
     });
 
     it('exit code is 11 when docker file not found', () => {
@@ -37,6 +41,7 @@ describe('Error Handler', () => {
         handleError(error);
 
         expect(process.exitCode).to.equal(11);
+        restoreStdout();
     });
 
     it('exit code is 12 when docker file contains unknown instruction', () => {
@@ -45,6 +50,7 @@ describe('Error Handler', () => {
         handleError(error);
 
         expect(process.exitCode).to.equal(12);
+        restoreStdout();
     });
 
     it('exit code is 13 when instruction failed', () => {
@@ -53,6 +59,7 @@ describe('Error Handler', () => {
         handleError(error);
 
         expect(process.exitCode).to.equal(13);
+        restoreStdout();
     });
 
     it('exit code is 1 when error unknown', () => {
@@ -61,5 +68,6 @@ describe('Error Handler', () => {
         handleError(error);
 
         expect(process.exitCode).to.equal(1);
+        restoreStdout();
     });
 });

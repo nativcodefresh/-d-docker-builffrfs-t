@@ -41,23 +41,25 @@ describe('Packer', () => {
         rimraf(directory, done);
     });
 
-    it('should pack all the files when ignore file empty', () => {
-        return pack(directory, '.ignore')
+    it('should pack all the files when ignore file empty', (done) => {
+        pack(directory, '.ignore')
             .then(() => {
                 expect(packingMock).to.be.calledWith(['.ignore', 'one.file', 'second.txt', 'another.html'].sort());
-            });
+            })
+            .asCallback(done);
     });
 
-    it('should pack all the files when ignore file missing', () => {
+    it('should pack all the files when ignore file missing', (done) => {
         fs.unlinkSync(path.join(directory, '.ignore'));
 
-        return pack(directory, '.ignore')
+        pack(directory, '.ignore')
             .then(() => {
                 expect(packingMock).to.be.calledWith(['one.file', 'second.txt', 'another.html'].sort());
-            });
+            })
+            .asCallback(done);
     });
 
-    it('should pack all files which isn\'t ignore', () => {
+    it('should pack all files which isn\'t ignore', (done) => {
         fs.writeFileSync(path.join(directory, 'other.log'));
 
         fs.writeFileSync(path.join(directory, 'another.log'));
@@ -71,14 +73,15 @@ describe('Packer', () => {
         ].join('\n'));
 
 
-        return pack(directory, '.ignore')
+        pack(directory, '.ignore')
             .then(() => {
                 expect(packingMock).to.be.calledWithExactly([
                     '.ignore',
                     'one.file',
                     'second.txt'
                 ].sort());
-            });
+            })
+            .asCallback(done);
     });
 
 });

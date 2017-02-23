@@ -18,11 +18,14 @@ describe('Response Printer', () => {
         process.stdout.write = sinon.stub(process.stdout, 'write');
     });
 
-    afterEach(() => {
-        process.stdout.write.restore();
-    });
+    let restoreStdoutAnd = (done) => {
+        return (...args) => {
+            process.stdout.write.restore();
+            return done(...args);
+        }
+    };
 
-    it('should print the data brought to it', () => {
+    it('should print the data brought to it', (done) => {
         const response = new EventEmitter();
 
         setImmediate(() => {
@@ -31,14 +34,15 @@ describe('Response Printer', () => {
             response.emit('end');
         });
 
-        return printResponse(response)
+        printResponse(response)
             .then(() => {
                 expect(process.stdout.write).to.have.been.calledWith('Hello  ');
                 expect(process.stdout.write).to.have.been.calledWith('World!!');
-            });
+            })
+            .asCallback(restoreStdoutAnd(done));
     });
 
-    it('should print the data to it in status form', () => {
+    it('should print the data to it in status form', (done) => {
         const response = new EventEmitter();
 
         setImmediate(() => {
@@ -47,13 +51,14 @@ describe('Response Printer', () => {
             response.emit('end');
         });
 
-        return printResponse(response)
+        printResponse(response)
             .then(() => {
                 expect(process.stdout.write).to.have.been.calledWith('This is status\n');
-            });
+            })
+            .asCallback(restoreStdoutAnd(done));
     });
 
-    it('should throw error when an error is send in response', () => {
+    it('should throw error when an error is send in response', (done) => {
         const response = new EventEmitter();
 
         setImmediate(() => {
@@ -65,11 +70,12 @@ describe('Response Printer', () => {
             response.emit('end');
         });
 
-        return printResponse(response)
+        printResponse(response)
             .then(() => {
                 throw new Error('No Error was thrown');
             }, (err) => {
                 expect(err.toString()).to.contain('Test Error Message');
-            });
+            })
+            .asCallback(restoreStdoutAnd(done));
     });
 });
