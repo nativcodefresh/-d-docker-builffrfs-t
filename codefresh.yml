@@ -1,11 +1,11 @@
 version: '1.0'
 steps:
-  unit-test-step:
+  unit_test_step:
     title: "Executing unit tests..."
     image: node:6.9.2-alpine
     environment:
         - COVERALLS_TOKEN=${{COVERALLS_TOKEN}}
-    working-directory: ${{initial-clone}}
+    working_directory: ${{initial-clone}}
     commands:
         - npm install
         - npm run no-only
@@ -18,4 +18,9 @@ steps:
     title: "Building step..."
     type: build
     image_name: codefresh/cf-docker-builder
+
+  push_to_registry:
+    type: push
+    candidate: ${{build_step}}
+    tag: ${{CF_BRANCH}}
 
