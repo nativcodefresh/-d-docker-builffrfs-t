@@ -22,7 +22,7 @@ describe('Response Printer', () => {
         return (...args) => {
             process.stdout.write.restore();
             return done(...args);
-        }
+        };
     };
 
     it('should print the data brought to it', (done) => {
