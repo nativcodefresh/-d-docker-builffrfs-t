@@ -18,7 +18,7 @@ describe('Response Printer', () => {
         process.stdout.write = sinon.stub(process.stdout, 'write');
     });
 
-    let restoreStdoutAnd = (done) => {
+    const restoreStdoutAnd = (done) => {
         return (...args) => {
             process.stdout.write.restore();
             return done(...args);
