@@ -18,7 +18,6 @@ ExitCodesErrorMapper.set(/Unknown instruction/ig, 12);
 ExitCodesErrorMapper.set(/The command '.*' returned a non-zero code/ig, 13);
 
 
-
 //------------------------------------------------------------------------------
 // Public Interface
 //------------------------------------------------------------------------------

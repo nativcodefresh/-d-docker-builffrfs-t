@@ -9,7 +9,7 @@
 const Promise       = require('bluebird');
 const path = require('path');
 const fs = require('fs');
-const ignore = require('ignore');
+const Ignore = require('ignore');
 const tar = require('tar-fs');
 
 Promise.promisifyAll(fs);
@@ -21,14 +21,14 @@ Promise.promisifyAll(fs);
 function getIgnoreFile(ignoreFilePath) {
     return fs.readFileAsync(ignoreFilePath, 'utf-8')
         .then((content) => {
-            return ignore().add(content);
+            return Ignore().add(content);
         })
         .catch((err) => {
             if (err.code !== 'ENOENT') {
                 throw err;
             }
 
-            return ignore();
+            return Ignore();
         });
 }
 
@@ -38,7 +38,7 @@ function getIgnoreFile(ignoreFilePath) {
 
 module.exports.pack = (directoryPath, ignoreFile) => {
     return getIgnoreFile(path.join(directoryPath, ignoreFile))
-        .then((ignoreFile) => {
-            return tar.pack(directoryPath, { ignore: file => ignoreFile.ignores(file) });
+        .then((ignore) => {
+            return tar.pack(directoryPath, { ignore: file => ignore.ignores(file) });
         });
 };
