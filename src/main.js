@@ -21,19 +21,12 @@ const { printResponse } = require('./printer');
 //------------------------------------------------------------------------------
 
 
-exports.main = ({ imageId, dockerFile, buildArgs, labels }) => {
+exports.main = (dockerOptions) => {
     const docker = Docker();
 
     pack('./', '.dockerignore')
         .then((tarArchive) => {
-            return docker.buildImageAsync(tarArchive, {
-                't': imageId,
-                'dockerfile': dockerFile,
-                'buildargs': buildArgs,
-                'labels': labels,
-                'pull': true,
-                'forcerm': true
-            })
+            return docker.buildImageAsync(tarArchive, dockerOptions)
                 .catch((err) => {
                     const jsonString = err.message.substring(err.message.indexOf('{'));
                     throw new CFError(JSON.parse(jsonString).message);
