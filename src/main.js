@@ -15,6 +15,7 @@ const { handleError } = require('./error-handler');
 Promise.promisifyAll(Docker.prototype);
 
 const { printResponse } = require('./printer');
+const { ProgressReader } = require('./progress-reader');
 
 //------------------------------------------------------------------------------
 // Helpers
@@ -24,9 +25,9 @@ const { printResponse } = require('./printer');
 exports.main = (dockerOptions) => {
     const docker = Docker();
 
-    pack('./', '.dockerignore')
+    pack('./', '.dockerignore', ['.dockerignore', dockerOptions.dockerfile || 'Dockerfile'])
         .then((tarArchive) => {
-            return docker.buildImageAsync(tarArchive, dockerOptions)
+            return docker.buildImageAsync(tarArchive.pipe(new ProgressReader()), dockerOptions)
                 .catch((err) => {
                     const jsonString = err.message.substring(err.message.indexOf('{'));
                     throw new CFError(JSON.parse(jsonString).message);

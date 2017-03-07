@@ -5,7 +5,7 @@ steps:
     image: node:6.9.2-alpine
     environment:
         - COVERALLS_TOKEN=${{COVERALLS_TOKEN}}
-    working_directory: ${{initial-clone}}
+    working_directory: ${{main_clone}}
     commands:
         - npm install
         - npm run no-only
@@ -13,6 +13,7 @@ steps:
         - npm run lint
         - npm run gulp coveralls
         - npm run clean
+    fail_fast: false
 
   build_step:
     title: "Building step..."

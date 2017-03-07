@@ -33,6 +33,7 @@
         "allowTemplateLiterals": true
       }
     ],
+    "no-trailing-spaces": "off",
     "no-underscore-dangle": "off",
     "no-param-reassign": "off",
     "no-else-return": "off",

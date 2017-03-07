@@ -23,7 +23,14 @@ gulp.task('no-only', (callback) => {
 
 gulp.task('lint', ['clean'], () => {
     return gulp.src(['**/*.js', '!**/node_modules/**', '!**/server/migration/**', '!coverage/**/*.js'])
-        .pipe(eslint())
+        .pipe(eslint({
+            rules: {
+                // This rule is important but very annoying during work. So it's defined only
+                // in here. (This is also acceptable because IDE usually trim trailing spaces
+                // before saving).
+                'no-trailing-spaces': 'warn'
+            }
+        }))
         .pipe(eslint.format())
         .pipe(eslint.failAfterError());
 });

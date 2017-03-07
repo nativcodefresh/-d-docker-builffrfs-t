@@ -53,7 +53,7 @@ describe('Response Printer', () => {
 
         printResponse(response)
             .then(() => {
-                expect(process.stdout.write).to.have.been.calledWith('This is status\n');
+                expect(process.stdout.write).to.have.been.calledWith('This is status ');
             })
             .asCallback(restoreStdoutAnd(done));
     });
@@ -90,6 +90,43 @@ describe('Response Printer', () => {
                 throw new Error('No Error was thrown');
             }, (err) => {
                 expect(err.toString()).to.contain('Test Error Message');
+            })
+            .asCallback(restoreStdoutAnd(done));
+    });
+
+    it('should print a \\r between status messages is sent in a row', (done) => {
+
+        const response = new EventEmitter();
+
+        setImmediate(() => {
+            response.emit('data', JSON.stringify({ status: 'Hello World1' }));
+            response.emit('data', JSON.stringify({ status: 'Hello World1' }));
+
+            response.emit('end');
+        });
+
+        printResponse(response)
+            .then(() => {
+                expect(process.stdout.write).to.have.been.calledWith('\r');
+            })
+            .asCallback(restoreStdoutAnd(done));
+    });
+
+    it('should print the progress of the status',  (done) => {
+
+        const response = new EventEmitter();
+
+        setImmediate(() => {
+            response.emit('data', JSON.stringify({ status: 'Hello World', progress: '1' }));
+            response.emit('data', JSON.stringify({ status: 'Hello World', progress: '2' }));
+
+            response.emit('end');
+        });
+
+        printResponse(response)
+            .then(() => {
+                expect(process.stdout.write).to.have.been.calledWith('Hello World 1');
+                expect(process.stdout.write).to.have.been.calledWith('Hello World 2');
             })
             .asCallback(restoreStdoutAnd(done));
     });
