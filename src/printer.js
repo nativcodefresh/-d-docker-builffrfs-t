@@ -6,13 +6,8 @@
 // Requirements
 //------------------------------------------------------------------------------
 const Promise       = require('bluebird');
-// const _       = require('lodash');
 const CFError = require('cf-errors');
-// const logger  = require('cf-logs').newLoggerFromFilename(__filename);
-
-//------------------------------------------------------------------------------
-// Helpers
-//------------------------------------------------------------------------------
+const es = require('event-stream');
 
 //------------------------------------------------------------------------------
 // Public Interface
@@ -22,27 +17,28 @@ module.exports.printResponse = response => new Promise((resolve, reject) => {
     let done = resolve;
     let lastMessageWasStatus = null;
 
-    response.on('data', (data) => {
-        const json = JSON.parse(data.toString());
+    response
+        .pipe(es.split())
+        .pipe(es.parse())
+        .pipe(es.map((json, cb) => { // eslint-disable-line array-callback-return
+            if (lastMessageWasStatus) {
+                process.stdout.write(json.status === lastMessageWasStatus ? '\r' : '\n');
+            }
 
-        if (lastMessageWasStatus) {
-            process.stdout.write(json.status === lastMessageWasStatus ? '\r' : '\n');
-        }
-
-        if (json.stream) {
-            process.stdout.write(json.stream);
-        } else if (json.status) {
-            process.stdout.write(`${json.status} ${json.progress || ''}`);
-        } else if (json.error) {
-            done = () => reject(new CFError(json.errorDetail.message));
-        } else if (Object.keys(json).length !== 0) {
-            done = () => reject(new CFError(`Error when parsing the docker api response: "${data}"`));
-        }
-        lastMessageWasStatus = json.status;
-    });
-
-    response.on('end', () => {
-        process.stdout.write('\n');
-        done();
-    });
+            if (json.stream) {
+                process.stdout.write(json.stream, cb);
+            } else if (json.status) {
+                process.stdout.write(`${json.status} ${json.progress || ''}`, cb);
+            } else if (json.error) {
+                done = () => reject(new CFError(json.errorDetail.message));
+                cb();
+            } else if (Object.keys(json).length !== 0) {
+                done = () => reject(new CFError(`Error when parsing the docker api response: "${json}"`));
+                cb();
+            }
+            lastMessageWasStatus = json.status;
+        })).on('end', () => {
+            process.stdout.write('\n');
+            done();
+        });
 });
