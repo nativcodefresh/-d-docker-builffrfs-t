@@ -5,129 +5,105 @@
 const chai       = require('chai');
 const sinon      = require('sinon');
 const sinonChai  = require('sinon-chai');
-const EventEmitter = require('events');
+const es         = require('event-stream');
 
 const { printResponse } = require('./printer');
 
 const expect = chai.expect;
+const { match } = sinon;
 chai.use(sinonChai);
 
 describe('Response Printer', () => {
 
     beforeEach(() => {
         process.stdout.write = sinon.stub(process.stdout, 'write');
+        process.stdout.write.withArgs(match.any, match.func).yields();
     });
 
-    const restoreStdoutAnd = (done) => {
-        return (...args) => {
-            process.stdout.write.restore();
-            return done(...args);
-        };
+    const restoreStdout = () => {
+        process.stdout.write.restore();
     };
 
-    it('should print the data brought to it', (done) => {
-        const response = new EventEmitter();
+    it('should print the data brought to it', () => {
+        const response = es.readArray([
+            `${JSON.stringify({ stream: 'Hello  ' })}\n`,
+            `${JSON.stringify({ stream: 'World!!' })}`
+        ]);
 
-        setImmediate(() => {
-            response.emit('data', JSON.stringify({ stream: 'Hello  ' }));
-            response.emit('data', JSON.stringify({ stream: 'World!!' }));
-            response.emit('end');
-        });
-
-        printResponse(response)
+        return printResponse(response)
             .then(() => {
                 expect(process.stdout.write).to.have.been.calledWith('Hello  ');
                 expect(process.stdout.write).to.have.been.calledWith('World!!');
             })
-            .asCallback(restoreStdoutAnd(done));
+            .finally(restoreStdout);
     });
 
-    it('should print the data to it in status form', (done) => {
-        const response = new EventEmitter();
+    it('should print the data to it in status form', () => {
+        const response = es.readArray([
+            `${JSON.stringify({ stream: 'Hello  ' })}\n`,
+            `${JSON.stringify({ status: 'This is status' })}`
+        ]);
 
-        setImmediate(() => {
-            response.emit('data', JSON.stringify({ stream: 'Hello World' }));
-            response.emit('data', JSON.stringify({ status: 'This is status' }));
-            response.emit('end');
-        });
-
-        printResponse(response)
+        return printResponse(response)
             .then(() => {
                 expect(process.stdout.write).to.have.been.calledWith('This is status ');
             })
-            .asCallback(restoreStdoutAnd(done));
+            .finally(restoreStdout);
     });
 
-    it('should do nothing when getting a empty object', (done) => {
-        const response = new EventEmitter();
+    it('should do nothing when getting a empty object', () => {
+        const response = es.readArray([
+            `${JSON.stringify({})}`
+        ]);
 
-        setImmediate(() => {
-            response.emit('data', JSON.stringify({}));
-            response.emit('end');
-        });
-
-        printResponse(response)
+        return printResponse(response)
             .then(() => {
                 expect(process.stdout.write).to.always.have.been.calledWithExactly('\n');
             })
-            .asCallback(restoreStdoutAnd(done));
+            .finally(restoreStdout);
     });
 
-    it('should throw error when an error is send in response', (done) => {
-        const response = new EventEmitter();
-
-        setImmediate(() => {
-            response.emit('data', JSON.stringify({ stream: 'Hello World' }));
-            response.emit('data', JSON.stringify({
+    it('should throw error when an error is send in response', () => {
+        const response = es.readArray([
+            `${JSON.stringify({ stream: 'Hello World' })}\n`,
+            `${JSON.stringify({
                 error: 'ERROR',
                 errorDetail: { message: 'Test Error Message' }
-            }));
-            response.emit('end');
-        });
-
-        printResponse(response)
+            })}`
+        ]);
+        return printResponse(response)
             .then(() => {
                 throw new Error('No Error was thrown');
             }, (err) => {
                 expect(err.toString()).to.contain('Test Error Message');
             })
-            .asCallback(restoreStdoutAnd(done));
+            .finally(restoreStdout);
     });
 
-    it('should print a \\r between status messages is sent in a row', (done) => {
+    it('should print a \\r between status messages is sent in a row', () => {
+        const response = es.readArray([
+            `${JSON.stringify({ status: 'Hello World1' })}\n`,
+            `${JSON.stringify({ status: 'Hello World1' })}`
+        ]);
 
-        const response = new EventEmitter();
-
-        setImmediate(() => {
-            response.emit('data', JSON.stringify({ status: 'Hello World1' }));
-            response.emit('data', JSON.stringify({ status: 'Hello World1' }));
-
-            response.emit('end');
-        });
-
-        printResponse(response)
+        return printResponse(response)
             .then(() => {
                 expect(process.stdout.write).to.have.been.calledWith('\r');
             })
-            .asCallback(restoreStdoutAnd(done));
+            .finally(restoreStdout);
     });
 
-    it('should print the progress of the status',  (done) => {
+    it('should print the progress of the status',  () => {
+        const response = es.readArray([
+            `${JSON.stringify({ status: 'Hello World', progress: '1' })}\n`,
+            `${JSON.stringify({ status: 'Hello World', progress: '2' })}`
+        ]);
 
-        const response = new EventEmitter();
-
-        setImmediate(() => {
-            response.emit('data', JSON.stringify({ status: 'Hello World', progress: '1' }));
-            response.emit('data', JSON.stringify({ status: 'Hello World', progress: '2' }));
-
-            response.emit('end');
-        });
-
-        printResponse(response)
+        return printResponse(response)
             .then(() => {
                 expect(process.stdout.write).to.have.been.calledWith('Hello World 1');
                 expect(process.stdout.write).to.have.been.calledWith('Hello World 2');
             })
-            .asCallback(restoreStdoutAnd(done));
+            .finally(restoreStdout);
     });
 });

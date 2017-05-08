@@ -5,9 +5,9 @@
 //------------------------------------------------------------------------------
 // Requirements
 //------------------------------------------------------------------------------
-const Promise       = require('bluebird');
+const Promise = require('bluebird');
 const CFError = require('cf-errors');
-const es = require('event-stream');
+const es      = require('event-stream');
 
 //------------------------------------------------------------------------------
 // Public Interface
@@ -34,6 +34,8 @@ module.exports.printResponse = response => new Promise((resolve, reject) => {
                 cb();
             } else if (Object.keys(json).length !== 0) {
                 done = () => reject(new CFError(`Error when parsing the docker api response: "${json}"`));
+                cb();
+            } else {
                 cb();
             }
             lastMessageWasStatus = json.status;
