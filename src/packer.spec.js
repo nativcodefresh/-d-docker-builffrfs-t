@@ -18,7 +18,8 @@ describe('Packer', () => {
 
     let pack;
     let directory;
-    let packingMock;
+    let packingFilesMock;
+    let packingDirectoriesMock;
 
     function waitForStream(stream) {
         return new Promise((resolve, reject) => {
@@ -30,11 +31,13 @@ describe('Packer', () => {
     }
 
     beforeEach(() => {
-        packingMock = sinon.mock();
-        pack        = proxyquire('./packer', {
+        packingFilesMock = sinon.mock();
+        packingDirectoriesMock = sinon.mock();
+        pack = proxyquire('./packer', {
             'tar-stream': {
                 pack: () => {
                     const packedFiles = [];
+                    const packedDirectories = [];
 
                     return new (class extends Readable {
                         constructor() {
@@ -44,8 +47,14 @@ describe('Packer', () => {
 
                         _read() {}
 
-                        entry({ name: filepath }) {
-                            packedFiles.push(filepath);
+                        entry({ name: filepath, type }) {
+                            if (type === 'file') {
+                                packedFiles.push(filepath);
+                            } else if (type === 'directory') {
+                                packedDirectories.push(filepath);
+                            } else {
+                                throw new Error('Unknown File ');
+                            }
 
                             return new (class extends Writable {
                                 _write(chunk, encoding, callback) {
@@ -55,7 +64,8 @@ describe('Packer', () => {
                         }
 
                         finalize() {
-                            packingMock(packedFiles.sort());
+                            packingFilesMock(packedFiles.sort());
+                            packingDirectoriesMock(packedDirectories.sort());
                             this.push(null);
                         }
                     })();
@@ -78,8 +88,27 @@ describe('Packer', () => {
         return pack(directory, '.ignore')
             .then(waitForStream)
             .then(() => {
-                expect(packingMock).to.be
+                expect(packingFilesMock).to.be
                     .calledWithExactly(['.ignore', 'one.file', 'second.txt', 'another.html'].sort());
+            });
+    });
+
+    it('should pack directories', () => {
+        fs.mkdirSync(path.join(directory, 'dir-.ignore'));
+        fs.mkdirSync(path.join(directory, 'dir-one.file'));
+        fs.mkdirSync(path.join(directory, 'dir-second.txt'));
+        fs.mkdirSync(path.join(directory, 'dir-another.html'));
+
+        return pack(directory, '.ignore')
+            .then(waitForStream)
+            .then(() => {
+                expect(packingDirectoriesMock).to.be
+                    .calledWithExactly([
+                        'dir-.ignore',
+                        'dir-one.file',
+                        'dir-second.txt',
+                        'dir-another.html'
+                    ].sort());
             });
     });
 
@@ -89,7 +118,7 @@ describe('Packer', () => {
         return pack(directory, '.ignore')
             .then(waitForStream)
             .then(() => {
-                expect(packingMock)
+                expect(packingFilesMock)
                     .to
                     .be
                     .calledWith(['one.file', 'second.txt', 'another.html'].sort());
@@ -114,7 +143,7 @@ describe('Packer', () => {
         return pack(directory, '.ignore')
             .then(waitForStream)
             .then(() => {
-                expect(packingMock).to.be.calledWithExactly([
+                expect(packingFilesMock).to.be.calledWithExactly([
                     '.ignore',
                     'one.file',
                     'second.txt'
@@ -132,7 +161,7 @@ describe('Packer', () => {
         return pack(directory, '.ignore')
             .then(waitForStream)
             .then(() => {
-                expect(packingMock).to.be.calledWithExactly([
+                expect(packingFilesMock).to.be.calledWithExactly([
                     '.ignore',
                     'one.file',
                     'second.txt',
@@ -149,7 +178,7 @@ describe('Packer', () => {
         return pack(directory, '.ignore')
             .then(waitForStream)
             .then(() => {
-                expect(packingMock).to.be.calledWithExactly([
+                expect(packingFilesMock).to.be.calledWithExactly([
                     '.ignore',
                     'one.file',
                     'second.txt',
@@ -171,7 +200,7 @@ describe('Packer', () => {
         return pack(directory, '.ignore')
             .then(waitForStream)
             .then(() => {
-                expect(packingMock).to.be.calledWithExactly([
+                expect(packingFilesMock).to.be.calledWithExactly([
                     '.ignore',
                     'one.file',
                     'another.html',
@@ -195,7 +224,7 @@ describe('Packer', () => {
         return pack(directory, '.ignore')
             .then(waitForStream)
             .then(() => {
-                expect(packingMock).to.be.calledWithExactly([
+                expect(packingFilesMock).to.be.calledWithExactly([
                     '.ignore',
                     'one.file',
                     'second.txt',
@@ -230,7 +259,7 @@ describe('Packer', () => {
         return pack(directory, '.ignore')
             .then(waitForStream)
             .then(() => {
-                expect(packingMock).to.be.calledWithExactly([
+                expect(packingFilesMock).to.be.calledWithExactly([
                     '.ignore',
                     'one.file',
                     'second.txt',
@@ -252,7 +281,7 @@ describe('Packer', () => {
         return pack(directory, '.ignore')
             .then(waitForStream)
             .then(() => {
-                expect(packingMock).to.be
+                expect(packingFilesMock).to.be
                     .calledWithExactly(['.ignore', 'one.file', 'second.txt', 'another.html'].sort());
             });
     });
@@ -269,7 +298,7 @@ describe('Packer', () => {
         return pack(directory, '.ignore')
             .then(waitForStream)
             .then(() => {
-                expect(packingMock).to.be
+                expect(packingFilesMock).to.be
                     .calledWithExactly(['.ignore', 'one.file', 'second.txt'].sort());
             });
     });
@@ -287,7 +316,7 @@ describe('Packer', () => {
         return pack(directory, '.ignore')
             .then(waitForStream)
             .then(() => {
-                expect(packingMock).to.be
+                expect(packingFilesMock).to.be
                     .calledWithExactly(['.ignore', 'one.file', 'second.txt'].sort());
             });
     });
@@ -304,7 +333,7 @@ describe('Packer', () => {
         return pack(directory, '.ignore')
             .then(waitForStream)
             .then(() => {
-                expect(packingMock).to.be.calledWithExactly([
+                expect(packingFilesMock).to.be.calledWithExactly([
                     '.ignore',
                     'one.file',
                     'second.txt',
@@ -322,7 +351,7 @@ describe('Packer', () => {
         return pack(directory, '.ignore')
             .then(waitForStream)
             .then(() => {
-                expect(packingMock).to.be.calledWithExactly([
+                expect(packingFilesMock).to.be.calledWithExactly([
                     'one.file',
                     'second.txt',
                     'another.html'
@@ -341,7 +370,7 @@ describe('Packer', () => {
         return pack(directory, '.ignore')
             .then(waitForStream)
             .then(() => {
-                expect(packingMock).to.be.calledWithExactly([
+                expect(packingFilesMock).to.be.calledWithExactly([
                     'one.file',
                     'second.txt',
                     'another.html'
@@ -362,7 +391,7 @@ describe('Packer', () => {
         return pack(directory, '.ignore')
             .then(waitForStream)
             .then(() => {
-                expect(packingMock).to.be.calledWithExactly([
+                expect(packingFilesMock).to.be.calledWithExactly([
                     'one.file',
                     'second.txt',
                     'another.html'
@@ -384,7 +413,7 @@ describe('Packer', () => {
         return pack(directory, '.ignore')
             .then(waitForStream)
             .then(() => {
-                expect(packingMock).to.be.calledWithExactly([
+                expect(packingFilesMock).to.be.calledWithExactly([
                     '.ignore',
                     'one.file',
                     'second.txt',
@@ -404,7 +433,7 @@ describe('Packer', () => {
         return pack(directory, '.ignore')
             .then(waitForStream)
             .then(() => {
-                expect(packingMock).to.be.calledWithExactly([
+                expect(packingFilesMock).to.be.calledWithExactly([
                     '.ignore',
                     'one.file',
                     'second.txt',
@@ -424,7 +453,7 @@ describe('Packer', () => {
         return pack(directory, '.ignore', ['one.file', 'another.html'])
             .then(waitForStream)
             .then(() => {
-                expect(packingMock).to.be.calledWithExactly([
+                expect(packingFilesMock).to.be.calledWithExactly([
                     '.ignore',
                     'one.file',
                     'another.html'
@@ -447,7 +476,7 @@ describe('Packer', () => {
         return pack(directory, '.ignore')
             .then(waitForStream)
             .then(() => {
-                expect(packingMock).to.be.calledWithExactly([
+                expect(packingFilesMock).to.be.calledWithExactly([
                     '.ignore',
                     'one.file',
                     'second.txt',

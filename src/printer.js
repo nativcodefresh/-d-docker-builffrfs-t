@@ -39,7 +39,12 @@ module.exports.printResponse = response => new Promise((resolve, reject) => {
                 cb();
             }
             lastMessageWasStatus = json.status;
-        })).on('end', () => {
+        }))
+        .on('error', (err) => {
+            process.stdout.write('\n');
+            reject(new CFError(err));
+        })
+        .on('end', () => {
             process.stdout.write('\n');
             done();
         });
