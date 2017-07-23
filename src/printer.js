@@ -32,10 +32,14 @@ module.exports.printResponse = response => new Promise((resolve, reject) => {
             } else if (json.error) {
                 done = () => reject(new CFError(json.errorDetail.message));
                 cb();
-            } else if (Object.keys(json).length !== 0) {
-                done = () => reject(new CFError(`Error when parsing the docker api response: "${json}"`));
+            } else if (Object.keys(json).length !== 0 && !json.aux) {
+                done = () => reject(new CFError(`Error when parsing the docker api response: ` +
+                                                `"${JSON.stringify(json)}"`));
+                cb();
+            } else {
                 cb();
             }
+
             lastMessageWasStatus = json.status;
         })).on('end', () => {
             process.stdout.write('\n');
