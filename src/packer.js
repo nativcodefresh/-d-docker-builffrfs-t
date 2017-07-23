@@ -80,40 +80,17 @@ function getIgnoreFunction(ignoreFilePath) {
 
 module.exports.pack = (directoryPath, ignoreFile, unignored = []) => {
     return getIgnoreFunction(path.join(directoryPath, ignoreFile))
-        .then(ignoreFunction => [readdirpAsync({
+        .then(ignoreFunction => readdirpAsync({
             root: directoryPath,
             fileFilter: ({ path: file }) => {
                 return unignored.includes(file) || !ignoreFunction(file);
             }
-        }), ignoreFunction])
-        .all()
-        .then(([result, ignoreFunction]) => {
+        }))
+        .then((result) => {
             const pack = tarStream.pack();
 
-            result.directories.forEach((directory) => {
-                if (!ignoreFunction(directory.path)) {
-                    pack.entry({
-                        name: directory.path,
-                        mtime: directory.stat.mtime,
-                        mode: directory.stat.mode,
-                        uid: directory.stat.uid,
-                        gid: directory.stat.gid,
-                        type: 'directory',
-                        size: 0
-                    });
-                }
-            });
-
             async.eachSeriesAsync(result.files, (file, done) => {
-                const entryStream = pack.entry({
-                    name: file.path,
-                    mtime: file.stat.mtime,
-                    size: file.stat.size,
-                    mode: file.stat.mode,
-                    uid: file.stat.uid,
-                    gid: file.stat.gid,
-                    type: 'file'
-                });
+                const entryStream = pack.entry({ name: file.path, size: file.stat.size });
                 const fileStream  = fs.createReadStream(file.fullPath);
 
                 pumpAsync(fileStream, entryStream)

@@ -30,6 +30,6 @@ module.exports.handleError = (err) => {
         }
     });
 
-    process.stdout.write(`${chalk.red.bold(err.message || err)}\n`);
+    process.stdout.write(`${chalk.red.bold(err.message)}\n`);
     process.exitCode = exitCode;
 };
