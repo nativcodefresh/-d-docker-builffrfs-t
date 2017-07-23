@@ -25,16 +25,18 @@ describe('Progress Reader', () => {
         progressReader.end();
     });
 
-    const restoreStdout = () => {
-        process.stdout.write.restore();
+    const restoreStdoutAnd = (done) => {
+        return (...args) => {
+            process.stdout.write.restore();
+            return done(...args);
+        };
     };
 
     it('should not change the data written to it', (done) => {
         progressReader.on('data', (data) => {
             Promise.resolve()
                 .then(() => expect(data.toString()).to.equal('Hello World'))
-                .finally(restoreStdout)
-                .asCallback(done);
+                .asCallback(restoreStdoutAnd(done));
         });
 
         progressReader.write('Hello World');

@@ -6,20 +6,13 @@
 // Requirements
 //------------------------------------------------------------------------------
 
-const Promise   = require('bluebird');
-const path      = require('path');
-const fs        = require('fs');
+const Promise       = require('bluebird');
+const path = require('path');
+const fs = require('fs');
 const minimatch = require('minimatch');
-const readdirp  = require('readdirp');
-const tarStream = require('tar-stream');
-const pump      = require('pump');
-const async     = require('async');
+const tar = require('tar-fs');
 
 Promise.promisifyAll(fs);
-Promise.promisifyAll(async);
-
-const readdirpAsync = Promise.promisify(readdirp);
-const pumpAsync     = Promise.promisify(pump);
 
 //------------------------------------------------------------------------------
 // Helpers
@@ -80,33 +73,9 @@ function getIgnoreFunction(ignoreFilePath) {
 
 module.exports.pack = (directoryPath, ignoreFile, unignored = []) => {
     return getIgnoreFunction(path.join(directoryPath, ignoreFile))
-        .then(ignoreFunction => readdirpAsync({
-            root: directoryPath,
-            fileFilter: ({ path: file }) => {
-                return unignored.includes(file) || !ignoreFunction(file);
-            }
-        }))
-        .then((result) => {
-            const pack = tarStream.pack();
-
-            async.eachSeriesAsync(result.files, (file, done) => {
-                const entryStream = pack.entry({ name: file.path, size: file.stat.size });
-                const fileStream  = fs.createReadStream(file.fullPath);
-
-                pumpAsync(fileStream, entryStream)
-                    .catch((err) => {
-                        console.error(err);
-                        pack.destroy();
-                    })
-                    .finally(done);
-            })
-                .then(() => {
-                    pack.finalize();
-                })
-                .catch((err) => {
-                    console.error(err);
-                });
-
-            return pack;
+        .then((ignoreFunction) => {
+            return tar.pack(directoryPath, {
+                ignore: file => !unignored.includes(file) && ignoreFunction(file)
+            });
         });
 };

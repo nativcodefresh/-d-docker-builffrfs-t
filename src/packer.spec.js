@@ -8,8 +8,9 @@ const sinon        = require('sinon');
 const sinonChai    = require('sinon-chai');
 const fs           = require('fs');
 const rimraf       = require('rimraf');
+const find         = require('find');
 const path         = require('path');
-const { Readable, Writable } = require('stream');
+const { Readable } = require('stream');
 
 const expect = chai.expect;
 chai.use(sinonChai);
@@ -20,42 +21,20 @@ describe('Packer', () => {
     let directory;
     let packingMock;
 
-    function waitForStream(stream) {
-        return new Promise((resolve, reject) => {
-            stream
-                .on('data', () => {})
-                .on('error', reject)
-                .on('end', resolve);
-        });
-    }
-
     beforeEach(() => {
         packingMock = sinon.mock();
         pack        = proxyquire('./packer', {
-            'tar-stream': {
-                pack: () => {
-                    const packedFiles = [];
+            'tar-fs': {
+                pack: (directoryPath, { ignore }) => {
+                    ignore = ignore || (() => {});
+                    packingMock(find.fileSync(directoryPath)
+                        .map(f => f.substr(directoryPath.length + 1))
+                        .filter(f => !ignore(f)).sort());
 
                     return new (class extends Readable {
                         constructor() {
                             super({});
                             this.push('Hello World', 'utf-8');
-                        }
-
-                        _read() {}
-
-                        entry({ name: filepath }) {
-                            packedFiles.push(filepath);
-
-                            return new (class extends Writable {
-                                _write(chunk, encoding, callback) {
-                                    setImmediate(callback);
-                                }
-                            })();
-                        }
-
-                        finalize() {
-                            packingMock(packedFiles.sort());
                             this.push(null);
                         }
                     })();
@@ -74,29 +53,29 @@ describe('Packer', () => {
         rimraf(directory, done);
     });
 
-    it('should pack all the files when ignore file empty', () => {
-        return pack(directory, '.ignore')
-            .then(waitForStream)
+    it('should pack all the files when ignore file empty', (done) => {
+        pack(directory, '.ignore')
             .then(() => {
                 expect(packingMock).to.be
                     .calledWithExactly(['.ignore', 'one.file', 'second.txt', 'another.html'].sort());
-            });
+            })
+            .asCallback(done);
     });
 
-    it('should pack all the files when ignore file missing', () => {
+    it('should pack all the files when ignore file missing', (done) => {
         fs.unlinkSync(path.join(directory, '.ignore'));
 
-        return pack(directory, '.ignore')
-            .then(waitForStream)
+        pack(directory, '.ignore')
             .then(() => {
                 expect(packingMock)
                     .to
                     .be
                     .calledWith(['one.file', 'second.txt', 'another.html'].sort());
-            });
+            })
+            .asCallback(done);
     });
 
-    it('should pack all files which isn\'t ignore', () => {
+    it('should pack all files which isn\'t ignore', (done) => {
         fs.writeFileSync(path.join(directory, 'other.log'));
 
         fs.writeFileSync(path.join(directory, 'another.log'));
@@ -111,26 +90,25 @@ describe('Packer', () => {
         ].join('\n'));
 
 
-        return pack(directory, '.ignore')
-            .then(waitForStream)
+        pack(directory, '.ignore')
             .then(() => {
                 expect(packingMock).to.be.calledWithExactly([
                     '.ignore',
                     'one.file',
                     'second.txt'
                 ].sort());
-            });
+            })
+            .asCallback(done);
     });
 
-    it('should not ignore files when pattern starts with /', () => {
+    it('should not ignore files when pattern starts with /', (done) => {
 
         fs.writeFileSync(path.join(directory, '.ignore'), [
             '/another.html'
         ].join('\n'));
 
 
-        return pack(directory, '.ignore')
-            .then(waitForStream)
+        pack(directory, '.ignore')
             .then(() => {
                 expect(packingMock).to.be.calledWithExactly([
                     '.ignore',
@@ -138,16 +116,16 @@ describe('Packer', () => {
                     'second.txt',
                     'another.html'
                 ].sort());
-            });
+            })
+            .asCallback(done);
     });
 
-    it('should pack file in sub-directories', () => {
+    it('should pack file in sub-directories', (done) => {
         fs.mkdirSync(path.join(directory, 'sub'));
 
         fs.writeFileSync(path.join(directory, 'sub', 'file.txt'));
 
-        return pack(directory, '.ignore')
-            .then(waitForStream)
+        pack(directory, '.ignore')
             .then(() => {
                 expect(packingMock).to.be.calledWithExactly([
                     '.ignore',
@@ -156,10 +134,11 @@ describe('Packer', () => {
                     'another.html',
                     'sub/file.txt'
                 ].sort());
-            });
+            })
+            .asCallback(done);
     });
 
-    it('should only ignore files on root directory or with path specified from root', () => {
+    it('should only ignore files on root directory or with path specified from root', (done) => {
         fs.mkdirSync(path.join(directory, 'sub'));
 
         fs.writeFileSync(path.join(directory, 'sub', 'file.txt'));
@@ -168,8 +147,7 @@ describe('Packer', () => {
             '*.txt'
         ].join('\n'));
 
-        return pack(directory, '.ignore')
-            .then(waitForStream)
+        pack(directory, '.ignore')
             .then(() => {
                 expect(packingMock).to.be.calledWithExactly([
                     '.ignore',
@@ -177,10 +155,11 @@ describe('Packer', () => {
                     'another.html',
                     'sub/file.txt'
                 ].sort());
-            });
+            })
+            .asCallback(done);
     });
 
-    it('should only ignore directories on root directory or with path specified from root', () => {
+    it('should only ignore directories on root directory or with path specified from root', (done) => {
         fs.mkdirSync(path.join(directory, 'sub'));
         fs.mkdirSync(path.join(directory, 'dir'));
         fs.mkdirSync(path.join(directory, 'sub', 'dir'));
@@ -192,8 +171,7 @@ describe('Packer', () => {
             'dir'
         ].join('\n'));
 
-        return pack(directory, '.ignore')
-            .then(waitForStream)
+        pack(directory, '.ignore')
             .then(() => {
                 expect(packingMock).to.be.calledWithExactly([
                     '.ignore',
@@ -202,10 +180,11 @@ describe('Packer', () => {
                     'another.html',
                     'sub/dir/file.txt'
                 ].sort());
-            });
+            })
+            .asCallback(done);
     });
 
-    it('should ignore every file in pattern if the globstar present', () => {
+    it('should ignore every file in pattern if the globstar present', (done) => {
 
         fs.mkdirSync(path.join(directory, 'sub'));
         fs.writeFileSync(path.join(directory, 'sub', 'some.html'));
@@ -227,8 +206,7 @@ describe('Packer', () => {
             'sub/**/?.log'
         ].join('\n'));
 
-        return pack(directory, '.ignore')
-            .then(waitForStream)
+        pack(directory, '.ignore')
             .then(() => {
                 expect(packingMock).to.be.calledWithExactly([
                     '.ignore',
@@ -237,10 +215,11 @@ describe('Packer', () => {
                     'sub/dir2/ab.log',
                     'sub/some.bin'
                 ].sort());
-            });
+            })
+            .asCallback(done);
     });
 
-    it('should negate ignores', () => {
+    it('should negate ignores', (done) => {
 
         fs.writeFileSync(path.join(directory, 'ignored.html'));
 
@@ -249,15 +228,15 @@ describe('Packer', () => {
             '!a*.html'
         ].join('\n'));
 
-        return pack(directory, '.ignore')
-            .then(waitForStream)
+        pack(directory, '.ignore')
             .then(() => {
                 expect(packingMock).to.be
                     .calledWithExactly(['.ignore', 'one.file', 'second.txt', 'another.html'].sort());
-            });
+            })
+            .asCallback(done);
     });
 
-    it('should negate ignores by the last pattern match', () => {
+    it('should negate ignores by the last pattern match', (done) => {
 
         fs.writeFileSync(path.join(directory, 'ignored.html'));
 
@@ -266,15 +245,15 @@ describe('Packer', () => {
             '*.html'
         ].join('\n'));
 
-        return pack(directory, '.ignore')
-            .then(waitForStream)
+        pack(directory, '.ignore')
             .then(() => {
                 expect(packingMock).to.be
                     .calledWithExactly(['.ignore', 'one.file', 'second.txt'].sort());
-            });
+            })
+            .asCallback(done);
     });
 
-    it('should allows comment in dockerfile', () => {
+    it('should allows comment in dockerfile', (done) => {
 
         fs.writeFileSync(path.join(directory, '.ignore'), [
             '',
@@ -284,15 +263,15 @@ describe('Packer', () => {
             '# comment'
         ].join('\n'));
 
-        return pack(directory, '.ignore')
-            .then(waitForStream)
+        pack(directory, '.ignore')
             .then(() => {
                 expect(packingMock).to.be
                     .calledWithExactly(['.ignore', 'one.file', 'second.txt'].sort());
-            });
+            })
+            .asCallback(done);
     });
 
-    it('should ignore directory with . when using ** pattern', () => {
+    it('should ignore directory with . when using ** pattern', (done) => {
         fs.mkdirSync(path.join(directory, '.sub'));
 
         fs.writeFileSync(path.join(directory, '.sub', 'file.txt'));
@@ -301,8 +280,7 @@ describe('Packer', () => {
             '**/file.txt'
         ].join('\n'));
 
-        return pack(directory, '.ignore')
-            .then(waitForStream)
+        pack(directory, '.ignore')
             .then(() => {
                 expect(packingMock).to.be.calledWithExactly([
                     '.ignore',
@@ -310,27 +288,28 @@ describe('Packer', () => {
                     'second.txt',
                     'another.html'
                 ].sort());
-            });
+            })
+            .asCallback(done);
     });
 
-    it('should ignore file with . when using * pattern', () => {
+    it('should ignore file with . when using * pattern', (done) => {
 
         fs.writeFileSync(path.join(directory, '.ignore'), [
             '.*'
         ].join('\n'));
 
-        return pack(directory, '.ignore')
-            .then(waitForStream)
+        pack(directory, '.ignore')
             .then(() => {
                 expect(packingMock).to.be.calledWithExactly([
                     'one.file',
                     'second.txt',
                     'another.html'
                 ].sort());
-            });
+            })
+            .asCallback(done);
     });
 
-    it('should ignore file when using [Ii] pattern', () => {
+    it('should ignore file when using [Ii] pattern', (done) => {
 
         fs.writeFileSync(path.join(directory, '.Ignore'));
 
@@ -338,18 +317,18 @@ describe('Packer', () => {
             '.[Ii]gnore'
         ].join('\n'));
 
-        return pack(directory, '.ignore')
-            .then(waitForStream)
+        pack(directory, '.ignore')
             .then(() => {
                 expect(packingMock).to.be.calledWithExactly([
                     'one.file',
                     'second.txt',
                     'another.html'
                 ].sort());
-            });
+            })
+            .asCallback(done);
     });
 
-    it('should ignore file when using [a-z] pattern', () => {
+    it('should ignore file when using [a-z] pattern', (done) => {
 
         fs.writeFileSync(path.join(directory, '.agnore'));
         fs.writeFileSync(path.join(directory, '.tgnore'));
@@ -359,18 +338,18 @@ describe('Packer', () => {
             '.[a-z]gnore'
         ].join('\n'));
 
-        return pack(directory, '.ignore')
-            .then(waitForStream)
+        pack(directory, '.ignore')
             .then(() => {
                 expect(packingMock).to.be.calledWithExactly([
                     'one.file',
                     'second.txt',
                     'another.html'
                 ].sort());
-            });
+            })
+            .asCallback(done);
     });
 
-    it('should ignore file when using [\\\\\\-\\^] pattern', () => {
+    it('should ignore file when using [\\\\\\-\\^] pattern', (done) => {
 
         fs.writeFileSync(path.join(directory, 'go-to'));
         fs.writeFileSync(path.join(directory, 'go_to'));
@@ -381,8 +360,7 @@ describe('Packer', () => {
             'go[\\-_\\^\\\\]to'
         ].join('\n'));
 
-        return pack(directory, '.ignore')
-            .then(waitForStream)
+        pack(directory, '.ignore')
             .then(() => {
                 expect(packingMock).to.be.calledWithExactly([
                     '.ignore',
@@ -390,10 +368,11 @@ describe('Packer', () => {
                     'second.txt',
                     'another.html'
                 ].sort());
-            });
+            })
+            .asCallback(done);
     });
 
-    it('should ignore file when using [^i] pattern', () => {
+    it('should ignore file when using [^i] pattern', (done) => {
 
         fs.writeFileSync(path.join(directory, '.Ignore'));
 
@@ -401,8 +380,7 @@ describe('Packer', () => {
             '.[^i]gnore'
         ].join('\n'));
 
-        return pack(directory, '.ignore')
-            .then(waitForStream)
+        pack(directory, '.ignore')
             .then(() => {
                 expect(packingMock).to.be.calledWithExactly([
                     '.ignore',
@@ -410,10 +388,11 @@ describe('Packer', () => {
                     'second.txt',
                     'another.html'
                 ].sort());
-            });
+            })
+            .asCallback(done);
     });
 
-    it('should not ignore the files in the unignored argument', () => {
+    it('should not ignore the files in the unignored argument', (done) => {
 
         fs.writeFileSync(path.join(directory, '.ignore'), [
             'one.file',
@@ -421,39 +400,14 @@ describe('Packer', () => {
             'another.html'
         ].join('\n'));
 
-        return pack(directory, '.ignore', ['one.file', 'another.html'])
-            .then(waitForStream)
+        pack(directory, '.ignore', ['one.file', 'another.html'])
             .then(() => {
                 expect(packingMock).to.be.calledWithExactly([
                     '.ignore',
                     'one.file',
                     'another.html'
                 ].sort());
-            });
-    });
-
-    it('should pack file in sub-directories which are unignored in file', () => {
-        fs.mkdirSync(path.join(directory, 'sub'));
-        fs.writeFileSync(path.join(directory, 'sub', 'file.txt'));
-
-        fs.mkdirSync(path.join(directory, 'sub', 'unignored'));
-        fs.writeFileSync(path.join(directory, 'sub', 'unignored',  'somefile.bin'));
-
-        fs.writeFileSync(path.join(directory, '.ignore'), [
-            'sub/*',
-            '!sub/unignored'
-        ].join('\n'));
-
-        return pack(directory, '.ignore')
-            .then(waitForStream)
-            .then(() => {
-                expect(packingMock).to.be.calledWithExactly([
-                    '.ignore',
-                    'one.file',
-                    'second.txt',
-                    'another.html',
-                    'sub/unignored/somefile.bin'
-                ].sort());
-            });
+            })
+            .asCallback(done);
     });
 });
