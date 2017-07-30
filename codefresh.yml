@@ -2,18 +2,18 @@ version: '1.0'
 steps:
   unit_test_step:
     title: "Executing unit tests..."
-    image: node:6.9.2-alpine
+    image: node:6.11.1-alpine
     environment:
-        - COVERALLS_TOKEN=${{COVERALLS_TOKEN}}
+        - COVERALLS_SERVICE_NAME=codefresh-io
+        - COVERALLS_REPO_TOKEN=${{COVERALLS_TOKEN}}
     working_directory: ${{main_clone}}
     commands:
-        - npm install
-        - npm run no-only
-        - npm test
-        - npm run lint
-        - npm run gulp coveralls
-        - npm run clean
-    fail_fast: false
+        - yarn install --frozen-lockfile
+        - yarn depcheck
+        - yarn lint
+        - yarn test:coverage
+        - yarn coveralls
+        - yarn run clean
 
   build_step:
     title: "Building step..."

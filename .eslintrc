@@ -13,6 +13,15 @@
     }
   },
 
+  "plugins": [
+    "mocha",
+    "chai-friendly"
+  ],
+
+  "env": {
+    "mocha": true
+  },
+
   "rules": {
     "indent": [
       "error",
@@ -56,6 +65,11 @@
     "quote-props": ["error", "consistent"],
     "class-methods-use-this": "off",
     "no-use-before-define": ["error", { "functions": false, "classes": true }],
-    "no-restricted-syntax": ["error", "WithStatement", "ForInStatement", "LabeledStatement"]
+    "no-restricted-syntax": ["error", "WithStatement", "ForInStatement", "LabeledStatement"],
+
+    "mocha/no-exclusive-tests": "warn",
+
+    "no-unused-expressions": "off",
+    "chai-friendly/no-unused-expressions": "error"
   }
 }
