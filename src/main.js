@@ -56,8 +56,7 @@ exports.main = (dockerOptions) => {
             const args = ['build'].concat(options, '.');
 
             const child = spawn(command, args, {
-                stdio: ['ignore', 'inherit', 'pipe'],
-                shell: true
+                stdio: ['ignore', 'inherit', 'pipe']
             });
 
             child.stderr.pipe(new ChalkSpreader('red', 'bold')).pipe(process.stdout);
