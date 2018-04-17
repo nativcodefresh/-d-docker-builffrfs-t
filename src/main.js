@@ -35,7 +35,8 @@ const availableOptions = {
     shmsize: simpleOption('shm-size'),
     squash: booleanOption('squash'),
     labels: mapOption('label'),
-    networkmode: simpleOption('network')
+    networkmode: simpleOption('network'),
+    target: simpleOption('target')
 };
 
 const command = 'docker';
@@ -54,7 +55,6 @@ exports.main = (dockerOptions) => {
     Promise.reduce(optionsPromises, (acc, item) => acc.concat(item))
         .then((options) => {
             const args = ['build'].concat(options, '.');
-
             const child = spawn(command, args, {
                 stdio: ['ignore', 'inherit', 'pipe']
             });
