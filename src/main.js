@@ -39,6 +39,16 @@ const availableOptions = {
     target: simpleOption('target')
 };
 
+const ExitCodesErrorMapper = new Map();
+// unexpected errors
+ExitCodesErrorMapper.set(/502/, 102); // Bad Gateway
+ExitCodesErrorMapper.set(/503/, 103); // Service Unavailable
+ExitCodesErrorMapper.set(/504/, 104); // Gateway Timeout
+ExitCodesErrorMapper.set(/521/, 121); // Web Server Is Down
+ExitCodesErrorMapper.set(/522/, 122); // Connection Timed Out
+ExitCodesErrorMapper.set(/523/, 123); // Origin is Unreachable
+ExitCodesErrorMapper.set(/524/, 124); // A Timeout Occurred
+
 const command = 'docker';
 
 exports.main = (dockerOptions) => {
@@ -61,9 +71,26 @@ exports.main = (dockerOptions) => {
 
             child.stderr.pipe(new ChalkSpreader('red', 'bold')).pipe(process.stdout);
 
+            // record the last stderr message for future use of deciding about the exit code
+            let lastError;
+            child.stderr.on('data', (data) => {
+                lastError = data.toString().toLowerCase();
+            });
+
             child.on('exit', (code, signal) => {
                 if (code !== null) {
-                    process.exit(code);
+                    let exitCode = code;
+
+                    // try to see if we can derive the exit code according to the last stderr message
+                    if (code !== 0) {
+                        ExitCodesErrorMapper.forEach((potentialExitCode, key) => {
+                            if (key.test(lastError)) {
+                                exitCode = potentialExitCode;
+                            }
+                        });
+                    }
+
+                    process.exit(exitCode);
                 } else {
                     process.stdout.write(chalk.red.bold(`Exit due signal ${signal}`));
                     process.exit(1);
