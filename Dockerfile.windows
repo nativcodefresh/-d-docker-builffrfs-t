@@ -1,4 +1,4 @@
-FROM microsoft/windowsservercore:1709 as download
+FROM microsoft/windowsservercore:1803 as download
 
 SHELL ["powershell", "-Command", "$ErrorActionPreference = 'Stop'; $ProgressPreference = 'SilentlyContinue';"]
 
@@ -44,22 +44,15 @@ RUN [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tl
       ) -notcontains $sig.SignerCertificate.Thumbprint) { Write-Error 'Unknown signer certificate' } ; \
     Start-Process msiexec.exe -ArgumentList '/i', 'yarn.msi', '/quiet', '/norestart' -NoNewWindow -Wait
 
-#FROM microsoft/nanoserver:1709
-
-#SHELL ["cmd", "/S", "/C"]
 
 ENV NPM_CONFIG_LOGLEVEL info
 
-#COPY --from=download /nodejs /nodejs
-#COPY --from=download [ "/Program Files (x86)/yarn", "/yarn" ]
-
 RUN $env:path += ';C:\nodejs;C:\yarn\bin'
-
 
 RUN Install-PackageProvider Nuget -Force
 RUN Install-Module -Name PowerShellGet -Force
-RUN Install-Module DockerProvider -Force
-RUN Install-Package Docker -ProviderName DockerProvider -Force
+RUN Install-Module DockerProvider -Force 
+RUN try {Install-Package Docker -ProviderName DockerProvider -RequiredVersion 18.03.1-ee-1 -Force} catch {echo Some odd behaviour of the MS package manager, nevermind} finally {echo Continuing anyway...}
 
 WORKDIR /app
 
