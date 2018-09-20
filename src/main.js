@@ -49,6 +49,17 @@ ExitCodesErrorMapper.set(/522/, 122); // Connection Timed Out
 ExitCodesErrorMapper.set(/523/, 123); // Origin is Unreachable
 ExitCodesErrorMapper.set(/524/, 124); // A Timeout Occurred
 
+// Network errors
+ExitCodesErrorMapper.set(/ECONNRESET/, 140);
+ExitCodesErrorMapper.set(/ENOTFOUND/, 141);
+ExitCodesErrorMapper.set(/ESOCKETTIMEDOUT/, 142);
+ExitCodesErrorMapper.set(/ETIMEDOUT/, 143);
+ExitCodesErrorMapper.set(/ECONNREFUSED/, 144);
+ExitCodesErrorMapper.set(/EHOSTUNREACH/, 145);
+ExitCodesErrorMapper.set(/EPIPE/, 146);
+ExitCodesErrorMapper.set(/EAI_AGAIN/, 147);
+
+
 const command = 'docker';
 
 exports.main = (dockerOptions) => {
