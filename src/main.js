@@ -41,23 +41,23 @@ const availableOptions = {
 
 const ExitCodesErrorMapper = new Map();
 // unexpected errors
-ExitCodesErrorMapper.set(/502/, 102); // Bad Gateway
-ExitCodesErrorMapper.set(/503/, 103); // Service Unavailable
-ExitCodesErrorMapper.set(/504/, 104); // Gateway Timeout
-ExitCodesErrorMapper.set(/521/, 121); // Web Server Is Down
-ExitCodesErrorMapper.set(/522/, 122); // Connection Timed Out
-ExitCodesErrorMapper.set(/523/, 123); // Origin is Unreachable
-ExitCodesErrorMapper.set(/524/, 124); // A Timeout Occurred
+ExitCodesErrorMapper.set(/502/, 130); // Bad Gateway
+ExitCodesErrorMapper.set(/503/, 130); // Service Unavailable
+ExitCodesErrorMapper.set(/504/, 130); // Gateway Timeout
+ExitCodesErrorMapper.set(/521/, 130); // Web Server Is Down
+ExitCodesErrorMapper.set(/522/, 130); // Connection Timed Out
+ExitCodesErrorMapper.set(/523/, 130); // Origin is Unreachable
+ExitCodesErrorMapper.set(/524/, 130); // A Timeout Occurred
 
 // Network errors
-ExitCodesErrorMapper.set(/ECONNRESET/, 140);
-ExitCodesErrorMapper.set(/ENOTFOUND/, 141);
-ExitCodesErrorMapper.set(/ESOCKETTIMEDOUT/, 142);
-ExitCodesErrorMapper.set(/ETIMEDOUT/, 143);
-ExitCodesErrorMapper.set(/ECONNREFUSED/, 144);
-ExitCodesErrorMapper.set(/EHOSTUNREACH/, 145);
-ExitCodesErrorMapper.set(/EPIPE/, 146);
-ExitCodesErrorMapper.set(/EAI_AGAIN/, 147);
+ExitCodesErrorMapper.set(/ECONNRESET/, 130);
+ExitCodesErrorMapper.set(/ENOTFOUND/, 130);
+ExitCodesErrorMapper.set(/ESOCKETTIMEDOUT/, 130);
+ExitCodesErrorMapper.set(/ETIMEDOUT/, 130);
+ExitCodesErrorMapper.set(/ECONNREFUSED/, 130);
+ExitCodesErrorMapper.set(/EHOSTUNREACH/, 130);
+ExitCodesErrorMapper.set(/EPIPE/, 130);
+ExitCodesErrorMapper.set(/EAI_AGAIN/, 130);
 
 
 const command = 'docker';
