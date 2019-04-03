@@ -71,4 +71,6 @@ WORKDIR /code
 
 RUN set-itemproperty -path 'HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\DOS Devices' -Name 'G:' -Value '\??\C:\codefresh\volume' -Type String
 
+LABEL owner="codefresh.io"
+
 CMD ["node", "C:/app/index.js"]
