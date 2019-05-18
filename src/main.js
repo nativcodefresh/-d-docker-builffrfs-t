@@ -7,6 +7,7 @@
 //------------------------------------------------------------------------------
 const Promise = require('bluebird');
 const chalk = require('chalk');
+const fs = require('fs');
 
 const { spawn } = require('child_process');
 
@@ -72,10 +73,31 @@ exports.main = (dockerOptions) => {
                 throw new Error(`Unknown option ${key}`);
             }
         });
-
-    Promise.reduce(optionsPromises, (acc, item) => acc.concat(item))
+     Promise.reduce(optionsPromises, (acc, item) => acc.concat(item))
         .then((options) => {
-            const args = ['build'].concat(options, '.');
+            var args;
+            if (process.env.LOCAL_TCP_DAEMON) {
+                let tcpDaemon = JSON.parse(process.env.LOCAL_TCP_DAEMON);
+                
+                fs.mkdirSync('/certs');
+                fs.writeFileSync('/certs/ca.pem', tcpDaemon.ca);
+                fs.writeFileSync('/certs/cert.pem', tcpDaemon.cert);
+                fs.writeFileSync('/certs/key.pem', tcpDaemon.key);
+
+                fs.appendFileSync('/etc/hosts', `${tcpDaemon.internalIp} ${tcpDaemon.internalHostname}\n`, function (err) {
+                    if (err) throw err;
+                });
+                var dockerHostOpts = ['-H', `tcp://${tcpDaemon.internalHostname}:${tcpDaemon.port}`,
+                    '--tlsverify',
+                    '--tlscacert=/certs/ca.pem',
+                    '--tlscert=/certs/cert.pem',
+                    '--tlskey=/certs/key.pem'
+                ];
+                args = dockerHostOpts.concat('build', options, '.');
+            } else {
+                args = ['build'].concat(options, '.');
+            }
+
             const child = spawn(command, args, {
                 stdio: ['ignore', 'inherit', 'pipe']
             });

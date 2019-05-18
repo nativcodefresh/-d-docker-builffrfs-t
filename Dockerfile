@@ -1,4 +1,4 @@
-FROM node:6.11.1-alpine AS node
+FROM node:12.2.0-alpine AS node
 
 WORKDIR /app
 
@@ -9,7 +9,7 @@ RUN yarn install --frozen-lockfile --production
 FROM docker:18.03.0
 
 ENV NPM_CONFIG_LOGLEVEL info
-ENV NODE_VERSION 6.11.1
+ENV NODE_VERSION 12.2.0
 
 # Installing Node
 # By Node Dockerfile:
