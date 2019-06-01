@@ -57,6 +57,9 @@ RUN addgroup -g 1000 node && \
     rm -Rf "node-v$NODE_VERSION" && \
     rm "node-v$NODE_VERSION.tar.xz" SHASUMS256.txt.asc SHASUMS256.txt
 
+RUN wget -O docker.tgz https://download.docker.com/linux/static/stable/x86_64/docker-18.09.6.tgz \
+    && tar --extract --file docker.tgz --strip-components 1 --directory /usr/local/bin/
+
 RUN apk add --no-cache tini
 
 COPY --from=node /app/node_modules /app/node_modules
