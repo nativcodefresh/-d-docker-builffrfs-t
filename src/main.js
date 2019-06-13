@@ -79,13 +79,16 @@ exports.main = (dockerOptions) => {
     Promise.reduce(optionsPromises, (acc, item) => acc.concat(item))
         .then((options) => {
             const args = ['build'].concat(options, '.');
-            const finalCommand = dockerOptions.ssh || dockerOptions.secrets ? `DOCKER_BUILDKIT=1 ${command}` : command;
 
             // todo: remove
-            process.stdout.write(finalCommand);
             process.stdout.write(JSON.stringify(args));
-            const child = spawn(finalCommand, args, {
-                stdio: ['ignore', 'inherit', 'pipe']
+            process.stdout.write('\n\n');
+
+            const child = spawn(command, args, {
+                stdio: ['ignore', 'inherit', 'pipe'],
+                env: {
+                    DOCKER_BUILDKIT: dockerOptions.ssh || dockerOptions.secrets ? 1 : 0
+                }
             });
 
             child.stderr.pipe(new ChalkSpreader('red', 'bold')).pipe(process.stdout);
