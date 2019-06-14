@@ -87,7 +87,7 @@ exports.main = (dockerOptions) => {
             const child = spawn(command, args, {
                 stdio: ['ignore', 'inherit', 'pipe'],
                 env: {
-                    DOCKER_BUILDKIT: dockerOptions.ssh || dockerOptions.secrets ? 1 : 0
+                    DOCKER_BUILDKIT: dockerOptions.ssh || dockerOptions.secrets || dockerOptions.progress ? 1 : 0
                 }
             });
 
