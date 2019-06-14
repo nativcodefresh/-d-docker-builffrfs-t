@@ -6,7 +6,7 @@ COPY ./package.json ./yarn.lock /app/
 
 RUN yarn install --frozen-lockfile --production
 
-FROM docker:18.09.6
+FROM docker:18.09.0
 
 ENV NPM_CONFIG_LOGLEVEL info
 ENV NODE_VERSION 6.11.1
