@@ -39,7 +39,7 @@ const availableOptions = {
     target: simpleOption('target'),
     secrets: listOption('secret'),
     ssh: listOption('ssh'),
-    // progress: simpleOption('progress'),
+    progress: simpleOption('progress'),
 };
 
 const ExitCodesErrorMapper = new Map();
