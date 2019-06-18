@@ -80,10 +80,6 @@ exports.main = (dockerOptions) => {
         .then((options) => {
             const args = ['build'].concat(options, '.');
 
-            // todo: remove
-            process.stdout.write(JSON.stringify(args));
-            process.stdout.write('\n\n');
-
             const child = spawn(command, args, {
                 stdio: ['ignore', 'inherit', 'pipe'],
                 env: {
