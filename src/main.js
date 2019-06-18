@@ -36,7 +36,10 @@ const availableOptions = {
     squash: booleanOption('squash'),
     labels: mapOption('label'),
     networkmode: simpleOption('network'),
-    target: simpleOption('target')
+    target: simpleOption('target'),
+    secrets: listOption('secret'),
+    ssh: listOption('ssh'),
+    progress: simpleOption('progress'),
 };
 
 const ExitCodesErrorMapper = new Map();
@@ -76,8 +79,12 @@ exports.main = (dockerOptions) => {
     Promise.reduce(optionsPromises, (acc, item) => acc.concat(item))
         .then((options) => {
             const args = ['build'].concat(options, '.');
+
             const child = spawn(command, args, {
-                stdio: ['ignore', 'inherit', 'pipe']
+                stdio: ['ignore', 'inherit', 'pipe'],
+                env: {
+                    DOCKER_BUILDKIT: dockerOptions.ssh || dockerOptions.secrets || dockerOptions.progress ? 1 : 0
+                }
             });
 
             child.stderr.pipe(new ChalkSpreader('red', 'bold')).pipe(process.stdout);
