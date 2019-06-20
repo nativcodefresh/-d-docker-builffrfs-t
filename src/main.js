@@ -73,8 +73,6 @@ exports.main = (dockerOptions) => {
         delete dockerOptions.cachefrom;
     }
 
-    process.stdout.write(JSON.stringify(process.env));
-
     const optionsPromises = Object.keys(dockerOptions)
         .map(key => [key, dockerOptions[key]])
         .map(([key, value]) => {
