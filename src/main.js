@@ -69,7 +69,7 @@ exports.main = (dockerOptions) => {
     const buildkitEnabled = process.env.ENABLE_BUILDKIT;
     const isBuildkitEnabled = buildkitEnabled || dockerOptions.ssh || dockerOptions.secrets || dockerOptions.progress;
 
-    if (isBuildkitEnabled && process.env.DISABLE_CACHE_ON_BUILDKIT) {
+    if (isBuildkitEnabled) {
         delete dockerOptions.cachefrom;
     }
 
