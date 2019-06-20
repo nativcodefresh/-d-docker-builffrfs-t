@@ -90,8 +90,7 @@ exports.main = (dockerOptions) => {
             const child = spawn(command, args, {
                 stdio: ['ignore', 'inherit', 'pipe'],
                 env: {
-                    // eslint-disable-next-line max-len
-                    DOCKER_BUILDKIT: isBuildkitEnabled ? 1 : 0
+                    DOCKER_BUILDKIT: dockerOptions.ssh || dockerOptions.secrets || dockerOptions.progress ? 1 : 0
                 }
             });
 
