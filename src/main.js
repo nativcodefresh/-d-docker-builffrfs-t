@@ -67,6 +67,8 @@ const command = 'docker';
 
 exports.main = (dockerOptions) => {
     const buildKitEnabled = process.env.ENABLE_BUILDKIT;
+
+    // todo: remove once --cache-from is supported by docker build kit
     if (buildKitEnabled) {
         delete dockerOptions.cachefrom;
     }
