@@ -66,10 +66,8 @@ ExitCodesErrorMapper.set(/EAI_AGAIN/, 130);
 const command = 'docker';
 
 exports.main = (dockerOptions) => {
-    const buildkitEnabled = process.env.ENABLE_BUILDKIT;
-    const isBuildkitEnabled = buildkitEnabled || dockerOptions.ssh || dockerOptions.secrets || dockerOptions.progress;
-
-    if (isBuildkitEnabled) {
+    const buildKitEnabled = process.env.ENABLE_BUILDKIT;
+    if (buildKitEnabled) {
         delete dockerOptions.cachefrom;
     }
 
@@ -90,7 +88,7 @@ exports.main = (dockerOptions) => {
             const child = spawn(command, args, {
                 stdio: ['ignore', 'inherit', 'pipe'],
                 env: {
-                    DOCKER_BUILDKIT: isBuildkitEnabled ? 1 : 0
+                    DOCKER_BUILDKIT: buildKitEnabled ? 1 : 0
                 }
             });
 
